@@ -13,7 +13,7 @@ public:
   double int_cte = 0;
   bool first_time = true;
   double prev_cte = 0;
-
+  double diff_cte = 0;
 
   /*
   * Coefficients
@@ -45,7 +45,7 @@ public:
   /*
   * Calculate the total PID error.
   */
-  double TotalError();
+  double TotalError(double cte);
 };
 
 #endif /* PID_H */

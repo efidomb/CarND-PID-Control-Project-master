@@ -16,8 +16,8 @@ int distance = 0;
 int rounda = 0;
 double best_err;
 double err;
-double p[3] = { 0, 0, 0 };
-//double p[3] = { 2.77054, 0.0796149, 27.532 };
+//double p[3] = { 0, 0, 0 };
+double p[3] = { 2.77054, 0.0796149, 27.532 };
 double dp[3] = { 1, 1, 1 };
 bool run_A = true;
 bool run_B = false;
@@ -98,7 +98,6 @@ int main()
 				std::cout << "dp: " << dp[0] << ", " << dp[1] << ", " << dp[2] << std::endl;
 				std::cout << "p: " << p[0] << ", " << p[1] << ", " << p[2] << std::endl;
 				pid.Init(p[0], p[1], p[2]);
-				diff_cte = cte;
 
 				if (num_stuck > 10) {
 					stuck = true;
@@ -107,7 +106,13 @@ int main()
 				if (distance <= total_distance && !stuck) {
 					pid.int_cte += cte;
 					abs_cte += cte * cte;
-					diff_cte = cte - prev_cte;
+					if (pid.first_time) {
+						diff_cte = 0;
+						pid.first_time = false;
+					}
+					else {
+						diff_cte = cte - prev_cte;
+					}
 					prev_cte = cte;
 					if (fabs(cte) > 5) {
 						num_stuck += 1;
@@ -141,44 +146,13 @@ int main()
 					err = abs_cte / distance;
 					distance = 0;
 					pid.int_cte = 0;
+					pid.first_time = true;
 					abs_cte = 0;
 					std::cout << "err: " << err << std::endl;
 					std::cout << "run_B: " << run_B << std::endl;
 					std::cout << "run_C: " << run_C << std::endl;
 					reset_simulator(ws);
 				}
-				/*
-				if (run_A) {
-				std::cout << "in run A" << std::endl;
-
-				if (distance < total_distance) {
-				pid.int_cte += cte;
-				diff_cte = cte - prev_cte;
-				prev_cte = cte;
-				if (diff_cte == 0) {
-				num_stuck += 1;
-				}
-				std::cout << "diff_cte: " << diff_cte << std::endl;
-				steer_value = -pid.Kp * cte - pid.Ki * pid.int_cte - pid.Kd * diff_cte;
-				std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-				json msgJson;
-				msgJson["steering_angle"] = steer_value;
-				msgJson["throttle"] = 0.3;
-				auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-				std::cout << msg << std::endl;
-				std::cout << "in run A" << std::endl;
-				ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-				}
-
-				if (distance > total_distance) {
-				distance = 0;
-				run_A = false;
-				std::cout << "end run A" << std::endl;
-				reset_simulator(ws);
-				}
-
-				}
-				*/
 
 				if (!run_A) {
 
@@ -198,42 +172,6 @@ int main()
 								PID pid;
 								pid.Init(p[0], p[1], p[2]); // problematic? what about pid.int_cte? is he initialized?
 							}
-							/*
-							if (run_B) {
-							std::cout << "in run B" << std::endl;
-
-
-							if (distance < total_distance && !stuck) { // should be 200
-							pid.int_cte += cte;
-							diff_cte = cte - prev_cte;
-							prev_cte = cte;
-							if (diff_cte == 0) {
-							num_stuck += 1;
-							}
-							std::cout << "diff_cte: " << diff_cte << std::endl;
-							std::cout << "num_stuck: " << num_stuck << std::endl;
-							steer_value = -pid.Kp * cte - pid.Ki * pid.int_cte - pid.Kd * diff_cte;
-							std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-							json msgJson;
-							msgJson["steering_angle"] = steer_value;
-							msgJson["throttle"] = 0.3;
-							auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-							std::cout << msg << std::endl;
-							std::cout << "in run B" << std::endl;
-							ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-							}
-
-							if (distance > total_distance || stuck) {
-							distance = 0;
-							run_B = false;
-							in_run = false;
-							num_stuck = 0;
-							stuck = false;
-							std::cout << "end run B" << std::endl;
-							reset_simulator(ws);
-							}
-							}
-							*/
 							std::cout << "enter: " << enter << std::endl;
 							if (enter) {
 								if (!in_run) {
@@ -289,42 +227,6 @@ int main()
 									in_run = true;
 								}
 							}
-							/*
-							if (run_C) {
-							std::cout << "in run C" << std::endl;
-
-							if (distance < total_distance && !stuck) { // should be 200
-							in_run = true;
-							pid.int_cte += cte;
-							diff_cte = cte - prev_cte;
-							prev_cte = cte;
-							if (diff_cte == 0) {
-							num_stuck += 1;
-							}
-							std::cout << "diff_cte: " << diff_cte << std::endl;
-							std::cout << "num_stuck: " << num_stuck << std::endl;
-							steer_value = -pid.Kp * cte - pid.Ki * pid.int_cte - pid.Kd * diff_cte;
-							std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-							json msgJson;
-							msgJson["steering_angle"] = steer_value;
-							msgJson["throttle"] = 0.3;
-							auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-							std::cout << msg << std::endl;
-							std::cout << "in run C" << std::endl;
-							ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-							}
-
-							if (distance > total_distance || stuck) {
-							distance = 0;
-							run_C = false;
-							in_run = false;
-							num_stuck = 0;
-							stuck = false;
-							std::cout << "end run C" << std::endl;
-							reset_simulator(ws);
-							}
-							}
-							*/
 							if (pass) {
 								if (!in_run) {
 									std::cout << "first after C" << std::endl;
@@ -378,34 +280,6 @@ int main()
 								pass = true;
 							}
 
-							// TRUE RIDE
-							// std::cout << "something went wrong" << std::endl;
-							// rounda += 1;
-							// std::cout << "dp: " << dp[0] << ", " << dp[1] << ", " << dp[2] << std::endl;
-							// reset_simulator(ws);
-
-							// std::cout << "something went really wrong" << std::endl;
-							// double diff_cte;
-							// if (pid.first_time == true) {
-							// 	  diff_cte = cte;
-							// }
-							// else {
-							//   diff_cte = cte - pid.prev_cte;
-							// }
-							// steer_value = -pid.Kp * cte - pid.Ki * pid.int_cte - pid.Kd * diff_cte;
-
-							// DEBUG
-							// std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-
-							// json msgJson;
-							// msgJson["steering_angle"] = steer_value;
-							// msgJson["throttle"] = 0.3;
-							// auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-							// std::cout << msg << std::endl;
-							// ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-
-							//double diff_cte;
-							// pid.int_cte += cte;
 						}
 						else {
 							std::cout << "end round" << std::endl;
@@ -415,8 +289,6 @@ int main()
 					}
 				}
 				else {
-					// Manual driving
-					std::cout << "enter place you should'nt be" << std::endl;
 					std::string msg = "42[\"manual\",{}]";
 					ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 				}
@@ -428,14 +300,11 @@ int main()
 				double steer_value;
 
 				pid.Init(p[0], p[1], p[2]);
-				diff_cte = cte;
-
-				pid.int_cte += cte;
-				diff_cte = cte - prev_cte;
-				prev_cte = cte;
-				std::cout << "diff_cte: " << diff_cte << std::endl;
+				pid.UpdateError(cte);
+				
+				std::cout << "diff_cte: " << pid.diff_cte << std::endl;
 				std::cout << "int_cte: " << pid.int_cte << std::endl;
-				steer_value = -pid.Kp * cte - pid.Ki * pid.int_cte - pid.Kd * diff_cte;
+				steer_value = pid.TotalError(cte);
 				std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 				json msgJson;
 				msgJson["steering_angle"] = steer_value;
@@ -444,6 +313,10 @@ int main()
 				std::cout << msg << std::endl;
 				ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 			}
+		}
+		else {
+			std::string msg = "42[\"manual\",{}]";
+			ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 		}
 		}
     }

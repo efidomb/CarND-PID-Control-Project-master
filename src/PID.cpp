@@ -21,8 +21,18 @@ void PID::Init(double Kp, double Ki, double Kd) {
 }
 
 void PID::UpdateError(double cte) {
+	int_cte += cte;
+	if (first_time) {
+		diff_cte = 0;
+		first_time = false;
+	}
+	else {
+		diff_cte = cte - prev_cte;
+	}
+	prev_cte = cte;
 }
 
-double PID::TotalError() {
+double PID::TotalError(double cte) {
+	return -Kp * cte - Ki * int_cte - Kd * diff_cte;
 }
 
